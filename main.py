@@ -12,12 +12,20 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Number Input")
 
 # 字体设置
-font = pygame.font.Font(None, 200)
+font = pygame.font.Font(None, 30)
 
 # 输入框设置
-input_boxs = [pygame.Rect(10, 10, 200, 200), pygame.Rect(210, 10, 200, 200), pygame.Rect(410, 10, 200, 200),
-              pygame.Rect(10, 210, 200, 200), pygame.Rect(210, 210, 200, 200), pygame.Rect(410, 210, 200, 200),
-              pygame.Rect(10, 410, 200, 200), pygame.Rect(210, 410, 200, 200), pygame.Rect(410, 410, 200, 200)]
+input_boxs = [pygame.Rect(10, 10, 30, 30), pygame.Rect(40, 10, 30, 30), pygame.Rect(70, 10, 30, 30),
+              pygame.Rect(100, 10, 30, 30), pygame.Rect(130, 10, 30, 30), pygame.Rect(160, 10, 30, 30),
+              pygame.Rect(190, 10, 30, 30), pygame.Rect(220, 10, 30, 30), pygame.Rect(250, 10, 30, 30),
+
+              pygame.Rect(10, 40, 30, 30), pygame.Rect(40, 40, 30, 30), pygame.Rect(70, 40, 30, 30),
+              pygame.Rect(10, 70, 30, 30), pygame.Rect(40, 70, 30, 30), pygame.Rect(70, 70, 30, 30)]
+
+input_boxs = [pygame.Rect(10, 10, 30, 30), pygame.Rect(40, 10, 30, 30), pygame.Rect(70, 10, 30, 30),
+              pygame.Rect(10, 40, 30, 30), pygame.Rect(40, 40, 30, 30), pygame.Rect(70, 40, 30, 30),
+              pygame.Rect(10, 70, 30, 30), pygame.Rect(40, 70, 30, 30), pygame.Rect(70, 70, 30, 30)]
+
 dirt = {1: {'value': '', 'font_color': ''},
         2: {'value': '', 'font_color': ''},
         3: {'value': '', 'font_color': ''},
