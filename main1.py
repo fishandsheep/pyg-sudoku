@@ -40,34 +40,24 @@ for out_ls in puzzle.board:
 # 初始化三个校验组，横向、纵向、九宫格
 w_group = []
 for i in range(9):
-    in_group = [x for x in range(9 * i, 9 * (i + 1), 1)]
+    in_group = [x for x in range(9 * i, 9 * (i + 1))]
     w_group.append(in_group)
 
 h_group = []
 for i in range(9):
     in_group = [x for x in range(i, 9 * 9, 9)]
     h_group.append(in_group)
+
 n_group = []
+for i in range(9):
+    row_indices = []
+    for j in range(9):
+        index = i // 3 * 27 + i % 3 * 3 + j // 3 * 9 + j % 3
+        row_indices.append(index)
+    n_group.append(row_indices)
 
 # 游戏循环
 running = True
-
-
-def check(index):
-    global item
-    w_list = w_group[index]
-    temp_list = []
-    for item in w_list:
-        dirt[item][2] = False
-        temp_list.append(dirt[item][0])
-    duplicate_w = {x: [i for i, v in enumerate(temp_list) if v == x] for x in set(temp_list)
-                   if temp_list.count(x) > 1}
-    if duplicate_w:
-        for value, indices in duplicate_w.items():
-            for ind in indices:
-                dirt[ind][2] = True
-
-
 while running:
     mouse_pos = pygame.mouse.get_pos()
     # 获取输入的数字
@@ -80,11 +70,18 @@ while running:
                     # 鼠标悬停在非初始化值的按钮上
                     if input_box.collidepoint(mouse_pos) and not dirt[i][1]:
                         dirt[i][0] = event.unicode
-                        w_i = i // 9
-                        h_i = i % 9
-                        # 校验横向
-                        check(w_i)
-                        check(h_i)
+                        # 初始化是否增强
+                        dirt = {k: [v[0], v[1], False] for k, v in dirt.items()}
+                        for w_ls in w_group:
+                            subset_dict = {index: value for index, value in dirt.items() if index in w_ls}
+                            duplicate_coordinates = set()
+
+                            for index, value in subset_dict.items():
+                                if value in value_counts:
+                                    value_counts[value].append(index)
+                                    duplicate_coordinates.add(value)
+                                else:
+                                    value_counts[value] = [index]
     # 渲染输入框
     screen.fill((255, 255, 255))
     for i, key in enumerate(input_boxs):
