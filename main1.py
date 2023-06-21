@@ -74,14 +74,9 @@ while running:
                         dirt = {k: [v[0], v[1], False] for k, v in dirt.items()}
                         for w_ls in w_group:
                             subset_dict = {index: value for index, value in dirt.items() if index in w_ls}
-                            duplicate_coordinates = set()
-
-                            for index, value in subset_dict.items():
-                                if value in value_counts:
-                                    value_counts[value].append(index)
-                                    duplicate_coordinates.add(value)
-                                else:
-                                    value_counts[value] = [index]
+                            duplicate_coordinates = [index for index, value in subset_dict.items() if
+                                                     any(v == value[0] and v != '' for v in value)]
+                            print(duplicate_coordinates)
     # 渲染输入框
     screen.fill((255, 255, 255))
     for i, key in enumerate(input_boxs):
