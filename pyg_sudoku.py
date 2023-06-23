@@ -1,9 +1,7 @@
-import sys
-import time
 from random import randrange
 
 import pygame
-from pygame.locals import *
+from pygame.locals import QUIT, KEYDOWN
 from sudoku import Sudoku
 
 # 初始化
@@ -116,7 +114,6 @@ while running:
                     time_elapsed = 0
                     is_complete = False
                     is_start = True
-                    time.sleep(0.4)
                     pygame.display.flip()
             dif_hover = dif_box.collidepoint(mouse_pos)
             if dif_hover:
@@ -135,7 +132,7 @@ while running:
     elif dif_value <= 0:
         dif_value = 0.01
     if is_start:
-        puzzle = Sudoku(3, 3, seed=randrange(sys.maxsize)).difficulty(dif_value)
+        puzzle = Sudoku(3, 3, seed=randrange(9223372036854775807)).difficulty(dif_value)
         # 记录输入的数字坐标和 [值,是否是初始化值,是否要增强显示]
         dirt_value = {x: '' for x in range(81)}
         dirt_init = {x: False for x in range(81)}
