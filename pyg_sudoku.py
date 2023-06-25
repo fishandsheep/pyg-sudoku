@@ -146,7 +146,7 @@ while running:
     for i, key in enumerate(input_boxes):
         pygame.draw.rect(screen, light_gray if box_init[i] else white, key)
         pygame.draw.rect(screen, green if key.collidepoint(mouse_pos) and not box_init[i] else deep_gray, key,
-                         2 if key.collidepoint(mouse_pos) else 1, 3)
+                         2 if key.collidepoint(mouse_pos) and not box_init[i] else 1, 3)
         text_surface = font.render(box_value[i], True, red if box_focus[i] else deep_gray)
         text_rect = text_surface.get_rect(center=key.center)
         screen.blit(text_surface, text_rect)
