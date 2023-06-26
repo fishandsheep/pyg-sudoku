@@ -4,7 +4,7 @@ A simple python-sudoku game via [py-sudoku](https://github.com/jeffsieu/py-sudok
 
 ### package
 ```shell
- Pyinstaller -Fw -i grid.ico  --upx-dir={dir} -n Sudoku pyg_sudoku.py
+ Pyinstaller -Fw -i grid.ico -n Sudoku pyg_sudoku.py
 ```
 
 ### screenshot
