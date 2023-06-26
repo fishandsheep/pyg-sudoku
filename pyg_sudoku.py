@@ -82,8 +82,8 @@ while running:
         elif event.type == KEYDOWN:
             if event.unicode in numbers:
                 change_index = -1
-                for i, input_boxes in enumerate(input_boxes):
-                    if input_boxes.collidepoint(mouse_pos) and not box_init[i]:
+                for i, input_boxe in enumerate(input_boxes):
+                    if input_boxe.collidepoint(mouse_pos) and not box_init[i]:
                         box_value[i] = event.unicode
                         change_index = i
                         break
