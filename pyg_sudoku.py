@@ -26,6 +26,7 @@ class SudokuGame:
     DEEP_GRAY = (105, 105, 105)
     RED = (204, 0, 0)
     LIGHT_GREEN = (144, 238, 144)
+    YELLOW = (255, 255, 0)
     
     # Game configuration
     VALID_NUMBERS = '123456789'
@@ -91,6 +92,8 @@ class SudokuGame:
         self.box_values = {i: '' for i in range(self.TOTAL_CELLS)}
         self.box_is_initial = {i: False for i in range(self.TOTAL_CELLS)}
         self.box_has_conflict = {i: False for i in range(self.TOTAL_CELLS)}
+        self.box_multiple_values = {i: '' for i in range(self.TOTAL_CELLS)}
+        self.box_is_uncertain = {i: False for i in range(self.TOTAL_CELLS)}
     
     def _initialize_ui_elements(self) -> None:
         """Initialize the UI elements (timer, difficulty, start button, reset button)."""
@@ -163,20 +166,35 @@ class SudokuGame:
         
         # Check horizontal group
         for other_index in self.horizontal_groups[cell_index // self.GRID_SIZE]:
-            if other_index != cell_index and self.box_values[other_index]:
-                valid_numbers.discard(self.box_values[other_index])
+            if other_index != cell_index:
+                if self.box_values[other_index]:
+                    valid_numbers.discard(self.box_values[other_index])
+                elif self.box_is_uncertain[other_index] and self.box_multiple_values[other_index]:
+                    # Remove all numbers that are in uncertain cells
+                    for num in self.box_multiple_values[other_index]:
+                        valid_numbers.discard(num)
         
         # Check vertical group
         for other_index in self.vertical_groups[cell_index % self.GRID_SIZE]:
-            if other_index != cell_index and self.box_values[other_index]:
-                valid_numbers.discard(self.box_values[other_index])
+            if other_index != cell_index:
+                if self.box_values[other_index]:
+                    valid_numbers.discard(self.box_values[other_index])
+                elif self.box_is_uncertain[other_index] and self.box_multiple_values[other_index]:
+                    # Remove all numbers that are in uncertain cells
+                    for num in self.box_multiple_values[other_index]:
+                        valid_numbers.discard(num)
         
         # Check 3x3 box group
         for box_group in self.nine_box_groups:
             if cell_index in box_group:
                 for other_index in box_group:
-                    if other_index != cell_index and self.box_values[other_index]:
-                        valid_numbers.discard(self.box_values[other_index])
+                    if other_index != cell_index:
+                        if self.box_values[other_index]:
+                            valid_numbers.discard(self.box_values[other_index])
+                        elif self.box_is_uncertain[other_index] and self.box_multiple_values[other_index]:
+                            # Remove all numbers that are in uncertain cells
+                            for num in self.box_multiple_values[other_index]:
+                                valid_numbers.discard(num)
                 break
         
         return valid_numbers
@@ -186,6 +204,8 @@ class SudokuGame:
         for i in range(self.TOTAL_CELLS):
             if not self.box_is_initial[i]:
                 self.box_values[i] = ''
+                self.box_multiple_values[i] = ''
+                self.box_is_uncertain[i] = False
         
         # Reset conflicts and completion
         self.box_has_conflict = {i: False for i in range(self.TOTAL_CELLS)}
@@ -200,6 +220,8 @@ class SudokuGame:
         self.box_values = {i: '' for i in range(self.TOTAL_CELLS)}
         self.box_is_initial = {i: False for i in range(self.TOTAL_CELLS)}
         self.box_has_conflict = {i: False for i in range(self.TOTAL_CELLS)}
+        self.box_multiple_values = {i: '' for i in range(self.TOTAL_CELLS)}
+        self.box_is_uncertain = {i: False for i in range(self.TOTAL_CELLS)}
         
         # Fill initial values from puzzle
         index = 0
@@ -217,8 +239,25 @@ class SudokuGame:
     def _handle_number_input(self, key: str) -> None:
         """Handle number key input for the focused cell."""
         if self.focused_cell_index != -1 and not self.box_is_initial[self.focused_cell_index]:
+            # If cell is uncertain, clear uncertainty and set single value
+            if self.box_is_uncertain[self.focused_cell_index]:
+                self.box_is_uncertain[self.focused_cell_index] = False
+                self.box_multiple_values[self.focused_cell_index] = ''
+            
             self.box_values[self.focused_cell_index] = key
             self._validate_all_cells()
+    
+    def _handle_space_input(self) -> None:
+        """Handle space key input for filling multiple valid numbers."""
+        if self.focused_cell_index != -1 and not self.box_is_initial[self.focused_cell_index]:
+            valid_numbers = self._get_valid_numbers(self.focused_cell_index)
+            
+            if len(valid_numbers) > 1:
+                # Clear single value and set multiple values
+                self.box_values[self.focused_cell_index] = ''
+                self.box_multiple_values[self.focused_cell_index] = ''.join(sorted(valid_numbers))
+                self.box_is_uncertain[self.focused_cell_index] = True
+                self._validate_all_cells()
     
     def _handle_mouse_wheel(self, direction: int) -> None:
         """Handle mouse wheel input for difficulty adjustment."""
@@ -233,6 +272,10 @@ class SudokuGame:
     def _check_completion(self) -> None:
         """Check if the puzzle is completed."""
         if self.is_complete:
+            return
+        
+        # Check if there are any uncertain cells
+        if any(self.box_is_uncertain.values()):
             return
         
         total = 0
@@ -261,9 +304,19 @@ class SudokuGame:
                 border_color = self.GREEN
                 border_width = 2
             elif i == self.focused_cell_index:
-                # Focused cell has green border
-                border_color = self.GREEN
-                border_width = 2
+                # Focused cell
+                if self.box_is_uncertain[i]:
+                    # Uncertain cell has yellow border
+                    border_color = self.YELLOW
+                    border_width = 2
+                else:
+                    # Normal focused cell has green border
+                    border_color = self.GREEN
+                    border_width = 2
+            elif self.box_is_uncertain[i]:
+                # Uncertain but not focused has yellow border
+                border_color = self.YELLOW
+                border_width = 1
             elif box.collidepoint(mouse_pos) and not self.box_is_initial[i] and not self.show_popup:
                 # Hover effect: just thicker border
                 border_color = self.DEEP_GRAY
@@ -275,12 +328,74 @@ class SudokuGame:
             # Draw box border
             pygame.draw.rect(self.screen, border_color, box, border_width, 3)
             
-            # Draw number
+            # Draw number(s)
             if self.box_values[i]:
+                # Single number
                 text_color = self.RED if self.box_has_conflict[i] else self.DEEP_GRAY
                 text_surface = self.font.render(self.box_values[i], True, text_color)
                 text_rect = text_surface.get_rect(center=box.center)
                 self.screen.blit(text_surface, text_rect)
+            elif self.box_multiple_values[i] and self.box_is_uncertain[i]:
+                # Multiple numbers in uncertain state
+                self._draw_multiple_numbers(box, self.box_multiple_values[i])
+    
+    def _draw_multiple_numbers(self, box: pygame.Rect, numbers: str) -> None:
+        """Draw multiple numbers in a cell with automatic spacing."""
+        if not numbers:
+            return
+        
+        # Use smaller font for multiple numbers
+        small_font = pygame.font.Font(None, 20)
+        
+        # Calculate layout based on number of digits
+        num_count = len(numbers)
+        
+        if num_count <= 3:
+            # Horizontal layout for 1-3 numbers
+            total_width = box.width - 10
+            spacing = total_width // (num_count + 1)
+            for i, num in enumerate(numbers):
+                x = box.left + spacing * (i + 1)
+                y = box.centery
+                text_surface = small_font.render(num, True, self.DEEP_GRAY)
+                text_rect = text_surface.get_rect(center=(x, y))
+                self.screen.blit(text_surface, text_rect)
+        
+        elif num_count <= 6:
+            # Two rows for 4-6 numbers
+            numbers_per_row = (num_count + 1) // 2
+            total_width = box.width - 10
+            spacing = total_width // (numbers_per_row + 1)
+            
+            for i, num in enumerate(numbers):
+                row = i // numbers_per_row
+                col = i % numbers_per_row
+                x = box.left + spacing * (col + 1)
+                y = box.centery + (row - 0.5) * 25
+                text_surface = small_font.render(num, True, self.DEEP_GRAY)
+                text_rect = text_surface.get_rect(center=(x, y))
+                self.screen.blit(text_surface, text_rect)
+        
+        else:
+            # 3x3 grid for 7-9 numbers
+            positions = [
+                (box.left + box.width * 0.25, box.top + box.height * 0.25),
+                (box.centerx, box.top + box.height * 0.25),
+                (box.left + box.width * 0.75, box.top + box.height * 0.25),
+                (box.left + box.width * 0.25, box.centery),
+                (box.centerx, box.centery),
+                (box.left + box.width * 0.75, box.centery),
+                (box.left + box.width * 0.25, box.top + box.height * 0.75),
+                (box.centerx, box.top + box.height * 0.75),
+                (box.left + box.width * 0.75, box.top + box.height * 0.75),
+            ]
+            
+            for i, num in enumerate(numbers):
+                if i < len(positions):
+                    x, y = positions[i]
+                    text_surface = small_font.render(num, True, self.DEEP_GRAY)
+                    text_rect = text_surface.get_rect(center=(x, y))
+                    self.screen.blit(text_surface, text_rect)
     
     def _show_number_popup(self, cell_index: int) -> None:
         """Show number popup for a specific cell."""
@@ -364,6 +479,8 @@ class SudokuGame:
             if rect.collidepoint(mouse_pos):
                 number = str(i + 1)
                 self.box_values[self.popup_cell_index] = number
+                self.box_multiple_values[self.popup_cell_index] = ''
+                self.box_is_uncertain[self.popup_cell_index] = False
                 self._validate_all_cells()
                 self._hide_number_popup()
                 return True
@@ -424,7 +541,14 @@ class SudokuGame:
                     self.running = False
                 
                 elif event.type == KEYDOWN:
-                    if event.unicode in self.VALID_NUMBERS:
+                    if event.key == pygame.K_SPACE:
+                        if self.show_popup:
+                            # Close popup and fill multiple numbers
+                            self._hide_number_popup()
+                            self._handle_space_input()
+                        else:
+                            self._handle_space_input()
+                    elif event.unicode in self.VALID_NUMBERS:
                         self._handle_number_input(event.unicode)
                 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -445,6 +569,8 @@ class SudokuGame:
                                         current_time - self.last_click_time < self.DOUBLE_CLICK_DELAY):
                                         # Double-click: clear the cell
                                         self.box_values[i] = ''
+                                        self.box_multiple_values[i] = ''
+                                        self.box_is_uncertain[i] = False
                                         self._validate_all_cells()
                                         self.focused_cell_index = i
                                     else:
