@@ -166,35 +166,20 @@ class SudokuGame:
         
         # Check horizontal group
         for other_index in self.horizontal_groups[cell_index // self.GRID_SIZE]:
-            if other_index != cell_index:
-                if self.box_values[other_index]:
-                    valid_numbers.discard(self.box_values[other_index])
-                elif self.box_is_uncertain[other_index] and self.box_multiple_values[other_index]:
-                    # Remove all numbers that are in uncertain cells
-                    for num in self.box_multiple_values[other_index]:
-                        valid_numbers.discard(num)
+            if other_index != cell_index and self.box_values[other_index]:
+                valid_numbers.discard(self.box_values[other_index])
         
         # Check vertical group
         for other_index in self.vertical_groups[cell_index % self.GRID_SIZE]:
-            if other_index != cell_index:
-                if self.box_values[other_index]:
-                    valid_numbers.discard(self.box_values[other_index])
-                elif self.box_is_uncertain[other_index] and self.box_multiple_values[other_index]:
-                    # Remove all numbers that are in uncertain cells
-                    for num in self.box_multiple_values[other_index]:
-                        valid_numbers.discard(num)
+            if other_index != cell_index and self.box_values[other_index]:
+                valid_numbers.discard(self.box_values[other_index])
         
         # Check 3x3 box group
         for box_group in self.nine_box_groups:
             if cell_index in box_group:
                 for other_index in box_group:
-                    if other_index != cell_index:
-                        if self.box_values[other_index]:
-                            valid_numbers.discard(self.box_values[other_index])
-                        elif self.box_is_uncertain[other_index] and self.box_multiple_values[other_index]:
-                            # Remove all numbers that are in uncertain cells
-                            for num in self.box_multiple_values[other_index]:
-                                valid_numbers.discard(num)
+                    if other_index != cell_index and self.box_values[other_index]:
+                        valid_numbers.discard(self.box_values[other_index])
                 break
         
         return valid_numbers
